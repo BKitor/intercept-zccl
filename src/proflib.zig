@@ -1,12 +1,31 @@
 const std = @import("std");
 const config = @import("config");
+const bconfig = @import("config");
+
+// TODO: Find way to de-dupe from build.zig
+pub const CCL_Flavour = enum {
+    nccl,
+    rccl,
+    fn from_str(str: []const u8) CCL_Flavour {
+        return if (std.mem.eql(u8, str, "nccl"))
+            CCL_Flavour.nccl
+        else
+            CCL_Flavour.rccl;
+    }
+};
+
+pub const ccl_flavour = CCL_Flavour.from_str(bconfig.ccl_flavour);
+
+const libcclso_str = switch (ccl_flavour) {
+    CCL_Flavour.nccl => "libnccl.so",
+    CCL_Flavour.rccl => "librccl.so",
+};
+
+var hname = [_]u8{0} ** std.c.HOST_NAME_MAX;
 
 var libncclso: std.DynLib = undefined;
 var initialized: bool = false;
 var myrank: i32 = -1;
-
-const libcclso_str: []const u8 = config.ccl_flavour;
-var hname = [_]u8{0} ** std.c.HOST_NAME_MAX;
 
 pub const Coll = enum(u8) {
     broadcast = 0,

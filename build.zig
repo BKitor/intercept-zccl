@@ -1,15 +1,16 @@
 const std = @import("std");
 
 const CUDA_HEADER_INSTALL = "/usr/local/cuda/include";
-const NCCL_HEADER_INSTALL = "/home/user/bkitor/bk_share/nccl/build/include/";
+const ROCM_HEADER_INSTALL = "/opt/rocm/include";
+const CCL_HEADER_INSTALL = "src/cinclude";
 
 const CCL_Flavour = enum {
     nccl,
     rccl,
     fn str(f: CCL_Flavour) []const u8 {
         return switch (f) {
-            CCL_Flavour.nccl => "libnccl.so",
-            CCL_Flavour.rccl => "librccl.so",
+            CCL_Flavour.nccl => "nccl",
+            CCL_Flavour.rccl => "rccl",
         };
     }
 };
@@ -26,10 +27,11 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
     lib.linkLibC();
-    lib.addIncludePath(.{ .src_path = .{ .owner = b, .sub_path = NCCL_HEADER_INSTALL } });
     lib.addIncludePath(.{ .src_path = .{ .owner = b, .sub_path = CUDA_HEADER_INSTALL } });
+    lib.addIncludePath(.{ .src_path = .{ .owner = b, .sub_path = ROCM_HEADER_INSTALL } });
+    lib.addIncludePath(.{ .src_path = .{ .owner = b, .sub_path = CCL_HEADER_INSTALL } });
 
-    const ccl_flavour = b.option(CCL_Flavour, "ccl_flavour", "ccl lib to buld against") orelse CCL_Flavour.nccl;
+    const ccl_flavour = b.option(CCL_Flavour, "CCL_FLAVOUR", "ccl lib to buld against") orelse CCL_Flavour.nccl;
     const opts = b.addOptions();
     opts.addOption([]const u8, "ccl_flavour", ccl_flavour.str());
     lib.root_module.addOptions("config", opts);

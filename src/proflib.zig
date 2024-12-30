@@ -1,5 +1,4 @@
 const std = @import("std");
-const config = @import("config");
 const bconfig = @import("config");
 
 // TODO: Find way to de-dupe from build.zig
@@ -85,12 +84,11 @@ pub fn init_proflib() !void {
 }
 
 pub fn grab_fn(fname: [:0]const u8, comptime fn_type: type) !fn_type {
-    const dlobj = libncclso.lookup(fn_type, fname);
-    if (dlobj == null) {
+    const dlobj = libncclso.lookup(fn_type, fname) orelse {
         std.log.info("Failed to find {s}", .{fname});
         return error.LDError;
-    }
-    return dlobj.?;
+    };
+    return dlobj;
 }
 
 pub fn prof_coll(coll: Coll, msize: usize) void {
